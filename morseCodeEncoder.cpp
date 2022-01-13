@@ -12,7 +12,7 @@ class morseCode
 
 	public:
 
-		double timeElement;
+		unsigned int timeElement;
 		double wpm;		
 
 		unsigned int morseCodeTable[36][8] = 
@@ -69,7 +69,7 @@ int main(void)
 	ofstream putText;
 	ofstream gpio;
 	ifstream getText;
-	int i, k, sendElement;
+	int i, k, sendElement, isNextCharSpace;
 	double  newWPM;
 
 	morseCode code;
@@ -79,12 +79,10 @@ int main(void)
 // Initialize to 5 WPM
 	code.wpm = 5;
 	code.timeElement = 240000; // 5 WPM
-//	code.timeElement = 92308;  // 13 WPM
-//	code.timeElement = 60000;  // 20 WPM	
 
-	double oneTimeUnit = code.timeElement;
-	double threeTimeUnits = oneTimeUnit * 3;
-	double sevenTimeUnits = oneTimeUnit * 7;
+	unsigned int oneTimeUnit = code.timeElement;
+	unsigned int threeTimeUnits = oneTimeUnit * 3;
+	unsigned int sevenTimeUnits = oneTimeUnit * 7;
 
 	// Export and configure GPIO23
 	fp = fopen("/sys/class/gpio/export", "w");
@@ -105,18 +103,6 @@ int main(void)
 		fprintf(fp, "out");
 		fclose(fp);
 	}
-
-/*
-	fp = fopen("/sys/class/gpio/gpio18/value", "w");
-	fprintf(fp, "1");
-	fclose(fp);
-
-	usleep(2000000);
-
-	fp = fopen("/sys/class/gpio/gpio18/value", "w");
-	fprintf(fp, "0");
-	fclose(fp);
-*/
 
 	while (keypress != 'q')
 	{
@@ -181,6 +167,8 @@ int main(void)
 
 				cout << "Sending: " << flush;
 
+				isNextCharSpace = 0;
+
 				for (i=0; i<stringLength; i++)
 				{
 					// Get next character
@@ -189,10 +177,16 @@ int main(void)
 					if (i == stringLength-1)
 						cout << "\r\n\r\n";
 
-					// If the next char is a space
+					// We need to know if the next char is a space so we
+					// know how many time units to delay after sending the current character
+					if (sendString[i+1] == ' ')
+						isNextCharSpace = 1;
+
+					// If the current  char is a space
 					if (sendString[i] == ' ')
 					{
-						usleep(sevenTimeUnits);
+					//	usleep(sevenTimeUnits);
+						isNextCharSpace = 0;
 					}
 
 					else
@@ -217,6 +211,11 @@ int main(void)
 								fprintf(fp, "1");
 								fclose(fp);
 								usleep(oneTimeUnit);
+
+                                                        	fp = fopen("/sys/class/gpio/gpio18/value", "w");
+                                                        	fprintf(fp, "0");
+                                                        	fclose(fp);  
+
 							}
 
 							else if (sendElement == DAH)
@@ -225,36 +224,46 @@ int main(void)
 								fprintf(fp, "1");
 								fclose(fp);
 								usleep(threeTimeUnits);
+
+                                                        	fp = fopen("/sys/class/gpio/gpio18/value", "w");
+                                                        	fprintf(fp, "0");
+                                                        	fclose(fp);    
 							}
 
 							else
 							{
 							}
 
-							fp = fopen("/sys/class/gpio/gpio18/value", "w");
-							fprintf(fp, "0");
-							fclose(fp);		
+							// If we have another DIT or DAH to send, we want
+							// to wait for one time unit before sending it.
 
-							usleep(oneTimeUnit);
+							if (sendElement != END)
+							{
+								if (code.morseCodeTable[k-1][l+1] != END)
+									usleep(oneTimeUnit);
+							}
+
+							// If, OTOH, we sent a complete character and the next character isn't a space,
+							// we want to wait for 3 time units before sending a new character.
+							// If the next char in the string is a space, we want to wait for 7
+							// time units
+							else if (sendElement == END)
+							{
+								if (isNextCharSpace != 1)
+									usleep(threeTimeUnits);
+								else
+									usleep(sevenTimeUnits);
+							}
+				
 							l++;
 
 						} while (sendElement != END);
-
-					usleep(threeTimeUnits);
 					} // end else
 				} // end for
-
- 
-
-//				cout << "Send String IS: " << " " << sendString << "\r\n";
-//				sleep(code.timeElement);
-//				cout << "Second char is: " << " " << sendString[1] << "\r\n";
-
 			}
 		}
 		else
 		{
-
 		}
 	} // end while()
 	return (0);
