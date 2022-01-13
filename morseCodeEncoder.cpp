@@ -108,7 +108,7 @@ int main(void)
 	{
 		system("clear");
 		cout << "press 'e' to enter a line of text\r\n";
-		cout << "Press 'c' to chagne the code speed\r\n";
+		cout << "Press 'c' to change the code speed\r\n";
 		cout << "Press 's' to  send\r\n";
 		cout << "Press 'q' to quit\r\n\r\n";
 
