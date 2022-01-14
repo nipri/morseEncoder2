@@ -3,6 +3,8 @@
 #include <string>
 #include <unistd.h>
 #include <errno.h>
+#include <ctype.h>
+
 #include "morseCodeEncoder.h"
 
 using namespace std;
@@ -196,7 +198,7 @@ int main(void)
 						do
 						{
 							k++;
-						} while (sendString[i] != code.morseCodeTable[k-1][0]);
+						} while ( tolower(sendString[i]) != code.morseCodeTable[k-1][0]);
 
 						// Send the char
 
