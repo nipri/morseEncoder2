@@ -198,72 +198,86 @@ int main(void)
 						do
 						{
 							k++;
-						} while ( tolower(sendString[i]) != code.morseCodeTable[k-1][0]);
+						} while ( tolower(sendString[i]) != code.morseCodeTable[k-1][0] && (k < 35) );
 
-						// Send the char
-
-						int l = 1;
-						do
+						if (k >= 35) // Didnt find a char to send
 						{
-							sendElement = code.morseCodeTable[k-1][l];
+							//do nothing
+						}
 
-							if (sendElement == DIT)
+						else // Send the char
+						{
+
+							int l = 1;
+							do
 							{
-								fp = fopen("/sys/class/gpio/gpio18/value", "w");
-								fprintf(fp, "1");
-								fclose(fp);
-								usleep(oneTimeUnit);
+								sendElement = code.morseCodeTable[k-1][l];
 
-                                                        	fp = fopen("/sys/class/gpio/gpio18/value", "w");
-                                                        	fprintf(fp, "0");
-                                                        	fclose(fp);  
-
-							}
-
-							else if (sendElement == DAH)
-							{
-								fp = fopen("/sys/class/gpio/gpio18/value", "w");
-								fprintf(fp, "1");
-								fclose(fp);
-								usleep(threeTimeUnits);
-
-                                                        	fp = fopen("/sys/class/gpio/gpio18/value", "w");
-                                                        	fprintf(fp, "0");
-                                                        	fclose(fp);    
-							}
-
-							else
-							{
-							}
-
-							// If we have another DIT or DAH to send, we want
-							// to wait for one time unit before sending it.
-
-							if (sendElement != END)
-							{
-								if (code.morseCodeTable[k-1][l+1] != END)
+								if (sendElement == DIT)
+								{
+									fp = fopen("/sys/class/gpio/gpio18/value", "w");
+									fprintf(fp, "1");
+									fclose(fp);
 									usleep(oneTimeUnit);
-							}
 
-							// If, OTOH, we sent a complete character and the next character isn't a space,
-							// we want to wait for 3 time units before sending a new character.
-							// If the next char in the string is a space, we want to wait for 7
-							// time units
-							else if (sendElement == END)
-							{
-								if (isNextCharSpace != 1)
+                                                        		fp = fopen("/sys/class/gpio/gpio18/value", "w");
+                                                        		fprintf(fp, "0");
+                                                        		fclose(fp);  
+
+								}
+
+								else if (sendElement == DAH)
+								{
+									fp = fopen("/sys/class/gpio/gpio18/value", "w");
+									fprintf(fp, "1");
+									fclose(fp);
 									usleep(threeTimeUnits);
-								else
-									usleep(sevenTimeUnits);
-							}
-				
-							l++;
 
-						} while (sendElement != END);
+                                                        		fp = fopen("/sys/class/gpio/gpio18/value", "w");
+                                                        		fprintf(fp, "0");
+                                                        		fclose(fp);    
+								}
+
+								else
+								{
+								}
+
+								// If we have another DIT or DAH to send, we want
+								// to wait for one time unit before sending it.
+	
+								if (sendElement != END)
+								{
+									if (code.morseCodeTable[k-1][l+1] != END)
+										usleep(oneTimeUnit);
+								}
+
+								// If, OTOH, we sent a complete character and the next character isn't a space,
+								// we want to wait for 3 time units before sending a new character.
+								// If the next char in the string is a space, we want to wait for 7
+								// time units
+								else if (sendElement == END)
+								{
+									if (isNextCharSpace != 1)
+										usleep(threeTimeUnits);
+									else
+										usleep(sevenTimeUnits);
+								}
+				
+								l++;
+							 
+
+							} while (sendElement != END);
+
+						}// end else
+
 					} // end else
+
 				} // end for
+
 			}
+
 		}
+
 		else
 		{
 		}
